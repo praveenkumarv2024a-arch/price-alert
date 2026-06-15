@@ -16,6 +16,20 @@ elif db_url.startswith("sqlite:///"):
 connect_args = {}
 if "sqlite" in db_url:
     connect_args["check_same_thread"] = False
+elif "postgresql+asyncpg" in db_url:
+    # asyncpg does not support 'sslmode' as a query parameter in the URL.
+    # We must strip it and configure SSL via connect_args instead.
+    if "sslmode" in db_url:
+        import urllib.parse
+        parsed = urllib.parse.urlparse(db_url)
+        query = urllib.parse.parse_qs(parsed.query)
+        sslmode = query.pop("sslmode", [None])[0]
+        new_query = urllib.parse.urlencode(query, doseq=True)
+        parsed = parsed._replace(query=new_query)
+        db_url = urllib.parse.urlunparse(parsed)
+        
+        if sslmode in ("require", "prefer", "allow"):
+            connect_args["ssl"] = True
 
 engine = create_async_engine(db_url, connect_args=connect_args, echo=False)
 
