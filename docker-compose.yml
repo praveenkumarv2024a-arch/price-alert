@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  price-tracker:
+    build: .
+    image: price-tracker:latest
+    container_name: price-tracker
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - HOST=0.0.0.0
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - DATABASE_URL=sqlite+aiosqlite:////app/data/tracker.db
+      - RUN_LOCAL_SCHEDULER=true
+      - SCRAPE_INTERVAL_MINUTES=15
+      - PLAYWRIGHT_HEADLESS=true
+    volumes:
+      - price-tracker-data:/app/data
+
+volumes:
+  price-tracker-data:
+    driver: local
